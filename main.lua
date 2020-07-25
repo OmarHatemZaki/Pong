@@ -55,7 +55,7 @@ function love.load()
 
     --initializaing scores for players, they will be displayed on screen later
     player1Score = 0
-    player2Score = 2
+    player2Score = 0
 
     --paddle positions on the Y axis (they can only move up and down)
     player1Y = 30
@@ -67,16 +67,16 @@ end
 function love.update(dt)
 
   --Player 1 movment
-  if love.keyboard.isDown('w') then
+  if love.keyboard.isDown('w') and player1Y > 0  then
     player1Y = player1Y - PADDLE_SPEED * dt
-  elseif love.keyboard.isDown('s') then
+  elseif love.keyboard.isDown('s') and player1Y < VIRTUAL_HEIGHT -20 then
     player1Y = player1Y + PADDLE_SPEED * dt
   end
 
   --player 2 movement
-  if love.keyboard.isDown('up') then
+  if love.keyboard.isDown('up') and player2Y > 0  then
     player2Y = player2Y - PADDLE_SPEED * dt
-  elseif love.keyboard.isDown('down') then
+  elseif love.keyboard.isDown('down') and player2Y < VIRTUAL_HEIGHT -20 then
     player2Y = player2Y + PADDLE_SPEED * dt
   end
 end
