@@ -19,6 +19,9 @@ WINDOW_HEIGHT = 720
 VIRTUAL_WIDTH = 432
 VIRTUAL_HEIGHT = 243
 
+--speed at which the paddles will move, will be multiplied by dt in update
+PADDLE_SPEED = 200
+
 
 --Runs when the game first starts up, only once; used to initialize the game.
 function love.load()
@@ -29,13 +32,17 @@ function love.load()
   love.graphics.setDefaultFilter('nearest', 'nearest')
 
   --more "retro-looking" font that is included in the game's directory.
-  --this function outputs the font in an object format that can be later used.
-  retroFont = love.graphics.newFont('font.ttf', 8)
+  --the function takes the font and size
+  --and outputs the font in an object format that can be later used.
+  smallFont = love.graphics.newFont('font.ttf', 8)
+
+  --larger font for drawing scores on the screen
+  bigFont = love.graphics.newFont('font.ttf', 32)
 
   --Assigns the font object we just imported as LÖVE2D's active font
   --notice that LÖVE2D can only handle one font at a time,
   --a font object is immutable.
-  love.graphics.setFont(retroFont)
+  love.graphics.setFont(smallFont)
 
   --This initlizes our virtual resolution, which will be rendered inside our
   --actual window no matter its dimensions;
@@ -45,6 +52,33 @@ function love.load()
         resizable = false,
         vsync = true
     })
+
+    --initializaing scores for players, they will be displayed on screen later
+    player1Score = 0
+    player2Score = 2
+
+    --paddle positions on the Y axis (they can only move up and down)
+    player1Y = 30
+    player2Y = VIRTUAL_HEIGHT - 50
+end
+
+--Took me a while to get my head around the dt concept, understood it from this
+--amazing link: https://www.youtube.com/watch?v=C1_2XlPE6s8
+function love.update(dt)
+
+  --Player 1 movment
+  if love.keyboard.isDown('w') then
+    player1Y = player1Y - PADDLE_SPEED * dt
+  elseif love.keyboard.isDown('s') then
+    player1Y = player1Y + PADDLE_SPEED * dt
+  end
+
+  --player 2 movement
+  if love.keyboard.isDown('up') then
+    player2Y = player2Y - PADDLE_SPEED * dt
+  elseif love.keyboard.isDown('down') then
+    player2Y = player2Y + PADDLE_SPEED * dt
+  end
 end
 
 --[[
@@ -78,7 +112,14 @@ function love.draw()
     --(text to render, starting x, starting y,
     --number of pixels to center align within (The entire screen here),
     --alignment mode, can be 'center', 'left', 'right')
+    love.graphics.setFont(smallFont)
     love.graphics.printf('Hello Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+
+    love.graphics.setFont(bigFont)
+    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 -50,
+    VIRTUAL_HEIGHT / 3)
+    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30,
+    VIRTUAL_HEIGHT / 3)
 
     --paddles are simply rectangles we draw on the screen at certain points,
     --as is the ball
@@ -87,10 +128,10 @@ function love.draw()
     --it also adds to the pixlated aesthetic.
 
     --render left paddle
-    love.graphics.rectangle('fill', 10, 30, 5, 20)
+    love.graphics.rectangle('fill', 10, player1Y, 5, 20)
 
     --render right paddle
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 50, 5, 20)
+    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, player2Y, 5, 20)
 
     --render ball in the center
     love.graphics.rectangle('fill', (VIRTUAL_WIDTH / 2) - 2, (VIRTUAL_HEIGHT / 2) - 2, 4, 4)
