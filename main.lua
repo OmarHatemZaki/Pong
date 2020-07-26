@@ -11,6 +11,15 @@
 --https://github.com/Ulydev/push
 push = require 'push'
 
+--turns lua into an object oriented machine
+--https://github.com/vrld/hump/blob/master/class.lua
+Class = require 'class'
+
+--These are now possible to create thanks to 'class' library
+--Now instead of having a main with 800 lines of code, our code is organized.
+require 'Paddle'
+require 'Ball'
+
 --Actual window size
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -22,7 +31,6 @@ VIRTUAL_HEIGHT = 243
 --speed at which the paddles will move, will be multiplied by dt in update
 PADDLE_SPEED = 200
 
-
 --Runs when the game first starts up, only once; used to initialize the game.
 function love.load()
 
@@ -31,17 +39,9 @@ function love.load()
   --This keeps us consitent with the crisp pixelated approach.
   love.graphics.setDefaultFilter('nearest', 'nearest')
 
-  -- velocity and position variables for our ball when play starts
-  ballX = VIRTUAL_WIDTH / 2 - 2
-  ballY = VIRTUAL_HEIGHT / 2 - 2
-
   -- "seed" the RNG so that calls to random are always random
-  -- use the current time, since that will vary on startup every time
+  -- uses the UNIX EPOCH, since that will vary on startup every time
   math.randomseed(os.time())
-
-  -- math.random returns a random value between the left and right number
-  ballDX = math.random(2) == 1 and 100 or -100
-  ballDY = math.random(-100, 100)
 
   --more "retro-looking" font that is included in the game's directory.
   --the function takes the font and size
@@ -64,9 +64,12 @@ function love.load()
   player1Score = 0
   player2Score = 0
 
-  --paddle positions on the Y axis (they can only move up and down)
-  player1Y = 30
-  player2Y = VIRTUAL_HEIGHT - 50
+  --Initintiating players and balls.
+  player1 = Paddle(10, 30, 5, 20)
+  player2 = Paddle(VIRTUAL_WIDTH - 15, VIRTUAL_HEIGHT - 30, 5, 20)
+
+  ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
+
 
   --using strings now for states, but might want to consider switching to
   --enums in lua, which isn't exactly direct like in C#/java
@@ -81,24 +84,32 @@ end
 --amazing link: https://www.youtube.com/watch?v=C1_2XlPE6s8
 function love.update(dt)
 
+  --might consider adding an extra condition where if neither button
+  --is keypressed then force dy to equal zero
   --Player 1 movment
-  if love.keyboard.isDown('w') and player1Y > 0  then
-    player1Y = player1Y - PADDLE_SPEED * dt
-  elseif love.keyboard.isDown('s') and player1Y < VIRTUAL_HEIGHT -20 then
-    player1Y = player1Y + PADDLE_SPEED * dt
+  if love.keyboard.isDown('w') then
+    player1.dy = -PADDLE_SPEED
+  elseif love.keyboard.isDown('s') then
+    player1.dy = PADDLE_SPEED
+  else
+    player1.dy = 0
   end
 
   --player 2 movement
-  if love.keyboard.isDown('up') and player2Y > 0  then
-    player2Y = player2Y - PADDLE_SPEED * dt
-  elseif love.keyboard.isDown('down') and player2Y < VIRTUAL_HEIGHT -20 then
-    player2Y = player2Y + PADDLE_SPEED * dt
+  if love.keyboard.isDown('up') then
+    player2.dy = -PADDLE_SPEED
+  elseif love.keyboard.isDown('down') then
+    player2.dy = PADDLE_SPEED
+  else
+    player2.dy = 0
   end
 
   if gameState == 'play' then
-    ballX = ballX + ballDX * dt
-    ballY = ballY + ballDY * dt
+    ball:update(dt)
   end
+
+  player1:update(dt)
+  player2:update(dt)
 end
 
 
@@ -109,9 +120,8 @@ end
     doesn't follow a continous press.
 ]]
 function love.keypressed(key)
-    --keys are accessed by string name
+
   if key == 'escape' then
-      --built-in function in LÖVE2D to terminate application.
       love.event.quit()
     elseif  key == 'return' then
         if gameState == 'start' then
@@ -127,17 +137,8 @@ function love.keypressed(key)
           --then call that function both in load and here.
           --this way, the window intilization and anything we don't want
           --to re-initialize will be left alone in love.load.
-          ballX = VIRTUAL_WIDTH / 2 - 2
-          ballY = VIRTUAL_HEIGHT / 2 - 2
+          ball:reset()
 
-          player1Score = 0
-          player2Score = 0
-
-          player1Y = 30
-          player2Y = VIRTUAL_HEIGHT - 50
-
-          ballDX = math.random(2) == 1 and 100 or -100
-          ballDY = math.random(-100, 100)
         end
     end
   end
@@ -184,13 +185,13 @@ function love.draw()
     --it also adds to the pixlated aesthetic.
 
     --render left paddle
-    love.graphics.rectangle('fill', 10, player1Y, 5, 20)
+    player1:render()
 
     --render right paddle
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, player2Y, 5, 20)
+    player2:render()
 
     --render ball in the center
-    love.graphics.rectangle('fill', ballX, ballY, 4, 4)
+    ball:render()
 
     --End rendering at virtual resolution.
     push:apply('end')
