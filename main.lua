@@ -34,6 +34,8 @@ PADDLE_SPEED = 200
 --Runs when the game first starts up, only once; used to initialize the game.
 function love.load()
 
+  love.window.setTitle('Pong')
+
   --This function overrides the default bilinear interpolation to a
   --less blurry filter, that is nearest neighbour.
   --This keeps us consitent with the crisp pixelated approach.
@@ -66,7 +68,7 @@ function love.load()
 
   --Initintiating players and balls.
   player1 = Paddle(10, 30, 5, 20)
-  player2 = Paddle(VIRTUAL_WIDTH - 15, VIRTUAL_HEIGHT - 30, 5, 20)
+  player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
 
   ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
 
@@ -84,8 +86,57 @@ end
 --amazing link: https://www.youtube.com/watch?v=C1_2XlPE6s8
 function love.update(dt)
 
+  if gameState == 'play' then
+    --detect collision with player 1 and 2, then translates the ball, randomizes
+    --direction (dy) and increases speed by 7% (dx)
+    if ball:collide(player1) then
+      ball.dx = -ball.dx * 1.07
+      ball.x = player1.x + 5
+    end
+
+      if ball.dy < 0 then
+        ball.dy = -math.random(10, 150)
+      else
+        ball.dy = math.random(10, 150)
+      end
+
+    if ball:collide(player2) then
+      ball.dx = -ball.dx * 1.07
+      ball.x = player2.x - 4
+    end
+
+      if ball.dy < 0 then
+        ball.dy = -math.random(10, 150)
+      else
+        ball.dy = math.random(10, 150)
+      end
+
+    --detect lower and upper boundry collision, translate away,
+    --then reverse direction
+    if ball.y <= 0 then
+      ball.y = 0
+      ball.dy = -ball.dy
+    end
+
+    if ball.y > VIRTUAL_HEIGHT - 4 then
+      ball.y = VIRTUAL_HEIGHT - 4
+      ball.dy = -ball.dy
+    end
+
+    if ball.x > VIRTUAL_WIDTH then
+      player1Score = player1Score + 1
+      ball:reset()
+      gameState = 'start'
+    end
+
+    if ball.x < 0 then
+      player2Score = player2Score + 1
+      ball:reset()
+      gameState = 'start'
+    end
+  end
   --might consider adding an extra condition where if neither button
-  --is keypressed then force dy to equal zero
+  --is keypressed then force dy to equal zero (DONE)
   --Player 1 movment
   if love.keyboard.isDown('w') then
     player1.dy = -PADDLE_SPEED
@@ -193,6 +244,14 @@ function love.draw()
     --render ball in the center
     ball:render()
 
+    displayFPS()
+
     --End rendering at virtual resolution.
     push:apply('end')
+end
+
+function displayFPS()
+  love.graphics.setFont(smallFont)
+  love.graphics.setColor(0, 255, 0, 255)
+  love.graphics.print('FPS' .. tostring(love.timer.getFPS()), 5, 5)
 end

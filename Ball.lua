@@ -20,6 +20,18 @@ function Ball:reset()
   self.dy = math.random(-100, 100)
 end
 
+function Ball:collide(paddle)
+  if self.x > paddle.x + paddle.width or paddle.x > self.x + self.width then
+    return false
+  end
+
+  if self.y > paddle.y + paddle.height or  paddle.y > self.y + self.height then
+    return false
+  end
+
+  return true
+end
+
 --used to update and move ball in play state.
 function Ball:update(dt)
   self.x = self.x + self.dx * dt

@@ -20,7 +20,7 @@ function Paddle:init(x, y, width, height)
   self.dy = 0 -- will be equal to PADDLE_SPEED
 end
 
---This took some time to think through, but is actually quite simple.
+--This took some time to think through, but it is actually quite simple.
 function Paddle:update(dt)
   if self.dy < 0 and self.y > 0 then
     self.y = self.y + self.dy * dt
